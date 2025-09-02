@@ -1,11 +1,17 @@
+type TProps = {
+    a: string
+    b: number
+}
+
+
 function Foo(){
     return 'Foo'
 }
 
-function Bar(){
+export function Bar({a, }:TProps){
     return 'Bar'
 }
 
-function Baz(){
+export function Baz(){
     return 'Baz'
 }

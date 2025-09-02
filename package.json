@@ -5,6 +5,7 @@
   "author": "Remco Stoeten",
   "license": "MIT",
   "version": "0.0.1",
+  "icon": "assets/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/remcostoeten/vscode-migrate-file-seperate-of-concerns.git"
@@ -13,7 +14,21 @@
     "vscode": "^1.74.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Formatters",
+    "Snippets"
+  ],
+  "keywords": [
+    "typescript",
+    "javascript",
+    "refactor",
+    "separation of concerns",
+    "code splitting",
+    "export",
+    "function",
+    "migrate",
+    "organize",
+    "modularize"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",

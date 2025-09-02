@@ -19,3 +19,7 @@ test-*.js
 !README.md
 pnpm-lock.yaml
 package-lock.json
+generate-icons.sh
+!assets/icon.png
+assets/*.svg
+assets/icon-*.png

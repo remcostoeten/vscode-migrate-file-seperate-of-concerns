@@ -4,136 +4,71 @@ import { TParsed, TFunction, TClass, TImport } from './types'
 import { getFileNameFromFunctionName, extractUsedVariables, extractUsedImports, generateImportStatement, isTypeImport } from './utils'
 
 export async function generateFiles(parsedData: TParsed, originalFilePath: string) {
-  console.log(`🚀 Starting file generation for: ${originalFilePath}`)
-  
+  console.log(`Starting file generation for: ${originalFilePath}`)
+
   const dirPath = path.dirname(originalFilePath)
   const baseName = path.basename(originalFilePath, path.extname(originalFilePath))
   const folderPath = path.join(dirPath, baseName)
 
-  console.log(`📁 Creating folder: ${folderPath}`)
+  console.log(`Creating folder: ${folderPath}`)
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true })
-    console.log(`✅ Created folder: ${folderPath}`)
+    console.log(`Created folder: ${folderPath}`)
   }
 
   const exportStatements: string[] = []
-  const migrationDetails: string[] = []
 
-  // Filter only exported items
-  const exportedFunctions = parsedData.functions.filter(f => f.isExported)
-  const exportedClasses = parsedData.classes.filter(c => c.isExported)
-  const exportedTypes = parsedData.types.filter(t => t.isExported)
-  const exportedInterfaces = parsedData.interfaces.filter(i => i.isExported)
-
-  console.log(`🔧 Processing ${exportedFunctions.length} exported functions...`)
-  for (const func of exportedFunctions) {
+  console.log(`Processing ${parsedData.functions.length} functions...`)
+  for (const func of parsedData.functions) {
     const fileName = getFileNameFromFunctionName(func.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateFunctionFile(func, parsedData)
-    
-    // Analyze what was included
-    const localTypes = findLocalTypeDependencies(func, parsedData)
-    const localInterfaces = findLocalInterfaceDependencies(func, parsedData)
-    const includedTypes = localTypes.length + localInterfaces.length
 
-    console.log(`  📄 Creating function file: ${fileName}${includedTypes > 0 ? ` (+ ${includedTypes} local type${includedTypes > 1 ? 's' : ''})` : ''}`)
+    console.log(`Creating function file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
-    
-    migrationDetails.push(`Function '${func.name}' -> ${fileName}${includedTypes > 0 ? ` (included ${includedTypes} local type dependencies)` : ''}`)
   }
 
-  console.log(`🏗️  Processing ${exportedClasses.length} exported classes...`)
-  for (const cls of exportedClasses) {
+  console.log(`Processing ${parsedData.classes.length} classes...`)
+  for (const cls of parsedData.classes) {
     const fileName = getFileNameFromFunctionName(cls.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateClassFile(cls, parsedData)
 
-    console.log(`  📄 Creating class file: ${fileName}`)
+    console.log(`Creating class file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
-    
-    migrationDetails.push(`Class '${cls.name}' -> ${fileName}`)
   }
 
-  console.log(`🏷️  Processing ${exportedTypes.length} exported types...`)
-  for (const type of exportedTypes) {
+  console.log(`Processing ${parsedData.types.length} types...`)
+  for (const type of parsedData.types) {
     const fileName = getFileNameFromFunctionName(type.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateTypeFile(type, parsedData)
 
-    console.log(`  📄 Creating type file: ${fileName}`)
+    console.log(`Creating type file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
-    
-    migrationDetails.push(`Type '${type.name}' -> ${fileName}`)
   }
 
-  console.log(`🔌 Processing ${exportedInterfaces.length} exported interfaces...`)
-  for (const iface of exportedInterfaces) {
+  console.log(`Processing ${parsedData.interfaces.length} interfaces...`)
+  for (const iface of parsedData.interfaces) {
     const fileName = getFileNameFromFunctionName(iface.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateInterfaceFile(iface, parsedData)
 
-    console.log(`  📄 Creating interface file: ${fileName}`)
+    console.log(`Creating interface file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
-    
-    migrationDetails.push(`Interface '${iface.name}' -> ${fileName}`)
-  }
-
-  // Show warnings for non-exported items that weren't migrated
-  const nonExportedFunctions = parsedData.functions.filter(f => !f.isExported)
-  const nonExportedClasses = parsedData.classes.filter(c => !c.isExported)
-  const nonExportedTypes = parsedData.types.filter(t => !t.isExported)
-  const nonExportedInterfaces = parsedData.interfaces.filter(i => !i.isExported)
-  
-  // Find which non-exported types were actually included as dependencies
-  const includedNonExportedTypes = new Set<string>()
-  exportedFunctions.forEach(func => {
-    const localTypes = findLocalTypeDependencies(func, parsedData)
-    const localInterfaces = findLocalInterfaceDependencies(func, parsedData)
-    localTypes.forEach(type => {
-      if (!type.isExported) includedNonExportedTypes.add(type.name)
-    })
-    localInterfaces.forEach(iface => {
-      if (!iface.isExported) includedNonExportedTypes.add(iface.name)
-    })
-  })
-  
-  const trulyUnmigrated = [
-    ...nonExportedFunctions,
-    ...nonExportedClasses,
-    ...nonExportedTypes.filter(t => !includedNonExportedTypes.has(t.name)),
-    ...nonExportedInterfaces.filter(i => !includedNonExportedTypes.has(i.name))
-  ]
-
-  if (trulyUnmigrated.length > 0) {
-    console.warn(`⚠️  Note: ${trulyUnmigrated.length} non-exported item(s) were not migrated (not used by any exported function):`)
-    trulyUnmigrated.forEach(item => {
-      const itemType = 'isAsync' in item ? 'function' : 'dependencies' in item ? (item.code.includes('interface') ? 'interface' : item.code.includes('type') ? 'type' : 'class') : 'unknown'
-      console.warn(`    • ${itemType}: ${item.name} (not exported, so not migrated)`)
-    })
-  }
-  
-  if (includedNonExportedTypes.size > 0) {
-    console.log(`✓ ${includedNonExportedTypes.size} non-exported type(s) were automatically included as dependencies: ${Array.from(includedNonExportedTypes).join(', ')}`)
   }
 
   if (exportStatements.length > 0) {
     const indexPath = path.join(folderPath, 'index.ts')
-    console.log(`📋 Creating index file: index.ts`)
+    console.log(`Creating index file: ${indexPath}`)
     fs.writeFileSync(indexPath, exportStatements.join('\n') + '\n')
   }
 
-  console.log(`\n🎉 File generation completed successfully!`)
-  console.log(`📦 Created ${exportStatements.length} files in: ${folderPath}`)
-  console.log(`\n📊 Migration Summary:`)
-  migrationDetails.forEach(detail => console.log(`  • ${detail}`))
-  
-  if (exportStatements.length === 0) {
-    console.warn(`⚠️  Warning: No files were created. This usually means no exported items were found.`)
-  }
+  console.log(`File generation completed. Created ${exportStatements.length} files in: ${folderPath}`)
 }
 
 function generateFunctionFile(func: TFunction, parsedData: TParsed): string {
@@ -142,7 +77,7 @@ function generateFunctionFile(func: TFunction, parsedData: TParsed): string {
   // Find local types that this function depends on
   const localTypes = findLocalTypeDependencies(func, parsedData)
   const localInterfaces = findLocalInterfaceDependencies(func, parsedData)
-  
+
   const usedVarNames = parsedData.variables.map(v => v.name)
   const usedVariables = extractUsedVariables(func.code, usedVarNames)
   const relevantVariables = parsedData.variables.filter(v => usedVariables.includes(v.name))
@@ -292,12 +227,12 @@ function generateInterfaceFile(iface: any, parsedData: TParsed): string {
 
 function findLocalTypeDependencies(func: TFunction, parsedData: TParsed) {
   const localTypes = []
-  
+
   for (const typeName of func.dependencies) {
     const localType = parsedData.types.find(t => t.name === typeName)
     if (localType && !localTypes.some(lt => lt.name === localType.name)) {
       localTypes.push(localType)
-      
+
       // Recursively find dependencies of this type
       const nestedDeps = findNestedTypeDependencies(localType, parsedData, new Set([localType.name]))
       nestedDeps.forEach(dep => {
@@ -307,18 +242,18 @@ function findLocalTypeDependencies(func: TFunction, parsedData: TParsed) {
       })
     }
   }
-  
+
   return localTypes
 }
 
 function findLocalInterfaceDependencies(func: TFunction, parsedData: TParsed) {
   const localInterfaces = []
-  
+
   for (const interfaceName of func.dependencies) {
     const localInterface = parsedData.interfaces.find(i => i.name === interfaceName)
     if (localInterface && !localInterfaces.some(li => li.name === localInterface.name)) {
       localInterfaces.push(localInterface)
-      
+
       // Recursively find dependencies of this interface
       const nestedDeps = findNestedInterfaceDependencies(localInterface, parsedData, new Set([localInterface.name]))
       nestedDeps.forEach(dep => {
@@ -328,45 +263,45 @@ function findLocalInterfaceDependencies(func: TFunction, parsedData: TParsed) {
       })
     }
   }
-  
+
   return localInterfaces
 }
 
 function findNestedTypeDependencies(type: any, parsedData: TParsed, visited: Set<string>): any[] {
   const nestedTypes = []
-  
+
   for (const depName of type.dependencies) {
     if (visited.has(depName)) continue
-    
+
     const nestedType = parsedData.types.find(t => t.name === depName)
     if (nestedType) {
       visited.add(depName)
       nestedTypes.push(nestedType)
-      
+
       const deeperDeps = findNestedTypeDependencies(nestedType, parsedData, visited)
       nestedTypes.push(...deeperDeps)
     }
   }
-  
+
   return nestedTypes
 }
 
 function findNestedInterfaceDependencies(iface: any, parsedData: TParsed, visited: Set<string>): any[] {
   const nestedInterfaces = []
-  
+
   for (const depName of iface.dependencies) {
     if (visited.has(depName)) continue
-    
+
     const nestedInterface = parsedData.interfaces.find(i => i.name === depName)
     if (nestedInterface) {
       visited.add(depName)
       nestedInterfaces.push(nestedInterface)
-      
+
       const deeperDeps = findNestedInterfaceDependencies(nestedInterface, parsedData, visited)
       nestedInterfaces.push(...deeperDeps)
     }
   }
-  
+
   return nestedInterfaces
 }
 
@@ -376,3 +311,4 @@ function cleanFunctionCode(code: string): string {
     .replace(/^async\s+/, '')
     .trim()
 }
+

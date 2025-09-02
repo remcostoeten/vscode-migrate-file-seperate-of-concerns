@@ -4,7 +4,12 @@ A VS Code extension that helps you migrate your TypeScript/JavaScript files to f
 
 ## Features
 
-- **Automatic Code Splitting**: Split functions, classes, types, and interfaces into separate files
+- **Export-Only Processing**: Only processes exported functions - keeps internal helpers private
+- **Multiple Export Patterns**: Supports all TypeScript/JavaScript export patterns:
+  - Direct exports: `export function foo()`
+  - Export const: `export const bar = ()`
+  - Default exports: `export default function baz()`
+  - Bottom exports: `export { foo, bar }`
 - **Smart Import Management**: Automatically manages imports and dependencies
 - **Type Preservation**: Maintains TypeScript types and interfaces during migration
 - **Babel-powered Parsing**: Uses Babel AST for accurate code analysis
@@ -24,18 +29,29 @@ A VS Code extension that helps you migrate your TypeScript/JavaScript files to f
 
 **Before** (`utils.ts`):
 ```typescript
-function formatDate(date: Date): string {
+// This private function won't be processed
+function privateHelper(str: string) {
+  return str.trim()
+}
+
+// These exported functions will be processed
+export function formatDate(date: Date): string {
   return date.toISOString()
 }
 
-function validateEmail(email: string): boolean {
+export const validateEmail = (email: string): boolean => {
   return email.includes('@')
 }
 
-type User = {
-  name: string
-  email: string
+export default function createUser(name: string, email: string) {
+  return { name: privateHelper(name), email }
 }
+
+// Bottom exports
+function hashValue(value: string) { return btoa(value) }
+function generateId() { return Math.random() }
+
+export { hashValue, generateId }
 ```
 
 **After** (creates `utils/` folder with):

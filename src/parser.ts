@@ -19,7 +19,6 @@ export function parseFile(content: string, filePath: string): TParsed {
       filePath
     }
 
-    // Babel parser returns a File node with a program property containing the actual AST
     const program = ast.program || ast
     traverseAST(program, result, content)
     return result
@@ -40,22 +39,18 @@ export function parseFile(content: string, filePath: string): TParsed {
 function traverseAST(node: any, result: TParsed, content: string) {
   if (!node) return
 
-  // First pass: collect all declarations
   const declarations = new Map<string, any>()
   
   switch (node.type) {
     case 'Program':
-      // Collect all top-level declarations first
       node.body.forEach((child: any) => {
         collectDeclarations(child, declarations)
       })
       
-      // Process exports only
       node.body.forEach((child: any) => {
         processExports(child, result, content, declarations)
       })
       
-      // Process imports
       node.body.forEach((child: any) => {
         if (child.type === 'ImportDeclaration') {
           result.imports.push(parseImportDeclaration(child))
@@ -101,10 +96,8 @@ function processExports(node: any, result: TParsed, content: string, declaration
   switch (node.type) {
     case 'ExportNamedDeclaration':
       if (node.declaration) {
-        // Direct exports: export function foo() {}, export const bar = ...
         processExportedDeclaration(node.declaration, result, content, true)
       } else if (node.specifiers) {
-        // Named exports: export { foo, bar }
         node.specifiers.forEach((spec: any) => {
           const exportedName = spec.exported.name
           const localName = spec.local.name
@@ -118,7 +111,6 @@ function processExports(node: any, result: TParsed, content: string, declaration
       break
       
     case 'ExportDefaultDeclaration':
-      // export default function() {} or export default foo
       if (node.declaration) {
         processExportedDeclaration(node.declaration, result, content, true, null, true)
       }
@@ -129,12 +121,10 @@ function processExports(node: any, result: TParsed, content: string, declaration
 function processExportedDeclaration(node: any, result: TParsed, content: string, isExported: boolean, parent?: any, isDefault = false) {
   switch (node.type) {
     case 'FunctionDeclaration':
-      // Only process functions that are exported
       result.functions.push(parseFunctionDeclaration(node, content, isExported, result.imports, isDefault))
       break
       
     case 'VariableDeclaration':
-      // Only process exported variables (const/let functions)
       node.declarations.forEach((decl: any) => {
         if (decl.id && decl.id.name && isArrowFunctionOrFunction(decl)) {
           result.functions.push(parseVariableFunction(decl, content, isExported, result.imports, parent || node, isDefault))
@@ -157,8 +147,6 @@ function processExportedDeclaration(node: any, result: TParsed, content: string,
       break
       
     case 'Identifier':
-      // This handles cases like: const foo = () => {}; export default foo;
-      // We need to look up the declaration
       break
   }
 }
@@ -174,13 +162,16 @@ function parseVariableFunction(decl: any, content: string, isExported: boolean, 
   const code = extractCodeFromNode(parent, content)
   
   const dependencies = extractDependencies(code)
-  const imports = filterRelevantImports(dependencies, fileImports)
+  const typeDependencies = extractTypeDependencies(code)
+  const allDependencies = [...new Set([...dependencies, ...typeDependencies])]
+  
+  const imports = filterRelevantImports(allDependencies, fileImports)
   const variables = extractLocalVariables(code)
   
   return {
     name,
     code,
-    dependencies,
+    dependencies: allDependencies,
     imports,
     variables,
     isExported,
@@ -193,23 +184,18 @@ function parseVariableFunction(decl: any, content: string, isExported: boolean, 
 }
 
 function markAsExported(name: string, result: TParsed) {
-  // Mark functions as exported
   const func = result.functions.find(f => f.name === name)
   if (func) func.isExported = true
   
-  // Mark types as exported
   const type = result.types.find(t => t.name === name)
   if (type) type.isExported = true
   
-  // Mark interfaces as exported
   const interface_ = result.interfaces.find(i => i.name === name)
   if (interface_) interface_.isExported = true
   
-  // Mark classes as exported
   const class_ = result.classes.find(c => c.name === name)
   if (class_) class_.isExported = true
   
-  // Mark variables as exported
   const variable = result.variables.find(v => v.name === name)
   if (variable) variable.isExported = true
 }
@@ -261,13 +247,16 @@ function parseFunctionDeclaration(node: any, content: string, isExported: boolea
   const code = extractCodeFromNode(node, content)
 
   const dependencies = extractDependencies(code)
-  const imports = filterRelevantImports(dependencies, fileImports)
+  const typeDependencies = extractTypeDependencies(code)
+  const allDependencies = [...new Set([...dependencies, ...typeDependencies])]
+  
+  const imports = filterRelevantImports(allDependencies, fileImports)
   const variables = extractLocalVariables(code)
 
   return {
     name,
     code,
-    dependencies,
+    dependencies: allDependencies,
     imports,
     variables,
     isExported,
@@ -319,10 +308,10 @@ function parseClassDeclaration(node: any, content: string, isExported: boolean, 
   return {
     name,
     code,
-    isExported,
     dependencies,
     imports,
     variables,
+    isExported,
     startLine: node.loc.start.line,
     endLine: node.loc.end.line
   }
@@ -363,12 +352,31 @@ function extractDependencies(code: string): string[] {
 
 function extractTypeDependencies(code: string): string[] {
   const dependencies = new Set<string>()
-  const typeRegex = /\b[A-Z][a-zA-Z0-9_]*\b/g
-  const matches = code.match(typeRegex) || []
+  
+  // Match type references in various contexts
+  const patterns = [
+    /\b(T[A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g,  // T-prefixed types (TProps, TUser, etc.)
+    /\b([A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g,  // Basic type names with optional generics
+    /:\s*(T[A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Type annotations with T-prefix
+    /:\s*([A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Type annotations
+    /:\s*([a-z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Type annotations with lowercase (for custom types)
+    /extends\s+(T[A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Extends clause with T-prefix
+    /extends\s+([A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Extends clause
+    /implements\s+(T[A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Implements clause with T-prefix
+    /implements\s+([A-Z][a-zA-Z0-9_]*(?:<[^>]+>)?)/g, // Implements clause
+    /typeof\s+(T[A-Z][a-zA-Z0-9_]*)/g, // Typeof expressions with T-prefix
+    /typeof\s+([A-Z][a-zA-Z0-9_]*)/g, // Typeof expressions
+    /keyof\s+(T[A-Z][a-zA-Z0-9_]*)/g, // Keyof expressions with T-prefix
+    /keyof\s+([A-Z][a-zA-Z0-9_]*)/g, // Keyof expressions
+  ]
 
-  matches.forEach(match => {
-    if (!isBuiltInType(match)) {
-      dependencies.add(match)
+  patterns.forEach(pattern => {
+    let match
+    while ((match = pattern.exec(code)) !== null) {
+      const typeName = match[1].split('<')[0] // Remove generic part for matching
+      if (!isBuiltInType(typeName) && !isKeyword(typeName)) {
+        dependencies.add(typeName)
+      }
     }
   })
 

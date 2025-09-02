@@ -36,15 +36,48 @@ async function migrateFile(filePath: string) {
       variables: parsedData.variables.length
     })
 
-    if (parsedData.functions.length > 0 || parsedData.types.length > 0 || parsedData.interfaces.length > 0 || parsedData.classes.length > 0) {
-      console.log(`Generating files for: ${filePath}`)
-      await generateFiles(parsedData, filePath)
-      console.log(`Files generated successfully for: ${filePath}`)
-    } else {
-      console.log(`No functions/types/interfaces/classes found in: ${filePath}`)
+    const totalItems = parsedData.functions.length + parsedData.types.length + parsedData.interfaces.length + parsedData.classes.length
+    const exportedItems = [
+      ...parsedData.functions.filter(f => f.isExported),
+      ...parsedData.types.filter(t => t.isExported),
+      ...parsedData.interfaces.filter(i => i.isExported),
+      ...parsedData.classes.filter(c => c.isExported)
+    ]
+
+    if (totalItems === 0) {
+      const warningMsg = `No exportable items found in file: ${path.basename(filePath)}. File contains no functions, types, interfaces, or classes to migrate.`
+      console.warn(`⚠️  ${warningMsg}`)
+      vscode.window.showWarningMessage(`Migration Warning: ${warningMsg}`)
+      return
     }
+
+    if (exportedItems.length === 0) {
+      const itemsList = []
+      if (parsedData.functions.length > 0) itemsList.push(`${parsedData.functions.length} function(s)`)
+      if (parsedData.types.length > 0) itemsList.push(`${parsedData.types.length} type(s)`)
+      if (parsedData.interfaces.length > 0) itemsList.push(`${parsedData.interfaces.length} interface(s)`)
+      if (parsedData.classes.length > 0) itemsList.push(`${parsedData.classes.length} class(es)`)
+      
+      const warningMsg = `No exported items found in file: ${path.basename(filePath)}. Found ${totalItems} item(s) but none are exported: ${itemsList.join(', ')}. Only exported items can be migrated.`
+      console.warn(`⚠️  ${warningMsg}`)
+      vscode.window.showWarningMessage(`Migration Warning: ${warningMsg}`)
+      return
+    }
+
+    console.log(`✓ Found ${exportedItems.length} exported item(s) to migrate from: ${filePath}`)
+    await generateFiles(parsedData, filePath)
+    console.log(`✅ Files generated successfully for: ${filePath}`)
+    
+    // Show summary of what was migrated
+    const migratedSummary = []
+    if (parsedData.functions.some(f => f.isExported)) migratedSummary.push(`${parsedData.functions.filter(f => f.isExported).length} function(s)`)
+    if (parsedData.types.some(t => t.isExported)) migratedSummary.push(`${parsedData.types.filter(t => t.isExported).length} type(s)`)
+    if (parsedData.interfaces.some(i => i.isExported)) migratedSummary.push(`${parsedData.interfaces.filter(i => i.isExported).length} interface(s)`)
+    if (parsedData.classes.some(c => c.isExported)) migratedSummary.push(`${parsedData.classes.filter(c => c.isExported).length} class(es)`)
+    
+    console.log(`📦 Successfully migrated: ${migratedSummary.join(', ')}`)
   } catch (error) {
-    console.error(`Error processing file ${filePath}:`, error)
+    console.error(`❌ Error processing file ${filePath}:`, error)
     throw error
   }
 }
