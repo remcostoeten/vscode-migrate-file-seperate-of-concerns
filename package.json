@@ -1,13 +1,49 @@
 {
-  "name": "vscode-migrate-file-seperate-of-concerns",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "separation-of-concerns",
+  "displayName": "Separation of Concerns Migrator",
+  "description": "Migrate files to separation of concerns pattern",
+  "author": "Remco Stoeten",
+  "license": "MIT",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.74.0"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "separationOfConcerns.migrate",
+        "title": "Migrate to Separation of Concerns"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "separationOfConcerns.migrate",
+          "when": "resourceScheme == file",
+          "group": "7_modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.28.3",
+    "@babel/types": "^7.28.2",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/typescript-estree": "^6.21.0"
+  }
 }
