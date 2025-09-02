@@ -1,1 +1,0 @@
-I added test file in __TEST* dir. That exports the functions right, but it doesnt create the new files with the needed imports or variables

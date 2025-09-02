@@ -5,7 +5,7 @@ export function parseFile(content: string, filePath: string): TParsed {
   try {
     const ast = parse(content, {
       sourceType: 'module',
-      plugins: ['typescript', 'decorators-legacy'],
+      plugins: ['typescript', 'jsx', 'decorators-legacy'],
       ranges: true
     })
 
