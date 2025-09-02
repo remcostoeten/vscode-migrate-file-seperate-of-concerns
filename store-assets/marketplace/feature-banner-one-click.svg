@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1000" viewBox="0 0 1800 1000">
+  <defs>
+    <linearGradient id="brandGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="lightOverlay" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.1);stop-opacity:1" />
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0.05);stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1800" height="1000" fill="url(#brandGradient)"/>
+  
+  <!-- Subtle Pattern -->
+  <g opacity="0.08">
+    <defs>
+      <pattern id="grid" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" stroke="white" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="1800" height="1000" fill="url(#grid)"/>
+  </g>
+  
+  <!-- Light Overlay -->
+  <rect width="1800" height="1000" fill="url(#lightOverlay)"/>
+  
+  <!-- Content Container -->
+  <rect x="100" y="100" width="1600" height="800" fill="rgba(255,255,255,0.02)" 
+        rx="24" stroke="rgba(255,255,255,0.1)" stroke-width="2"/>
+  
+  <!-- Header Section -->
+  <g id="headerSection">
+    <!-- Feature Badge -->
+    <rect x="150" y="150" width="180" height="40" rx="20" fill="rgba(255,255,255,0.15)"/>
+    <text x="240" y="175" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="14" font-weight="600" fill="white" text-anchor="middle">
+      ONE-CLICK MIGRATION
+    </text>
+    
+    <!-- Main Title -->
+    <text x="150" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="56" font-weight="700" fill="white">
+      Instant Code Organization
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="150" y="290" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="24" font-weight="400" fill="rgba(255,255,255,0.9)">
+      Right-click any TypeScript file and migrate to separation of concerns
+    </text>
+  </g>
+  
+  <!-- Visual Content Area -->
+  <g id="visualContent">
+    <!-- Main Visual Container -->
+    <rect x="150" y="340" width="1500" height="420" fill="rgba(255,255,255,0.08)" 
+          rx="16" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+    
+    <!-- Before/After Split -->
+    <g id="beforeAfter">
+      <!-- Before Section -->
+      <rect x="180" y="370" width="720" height="360" fill="rgba(255,255,255,0.05)" 
+            rx="12" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="540" y="410" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+            font-size="20" font-weight="600" fill="white" text-anchor="middle">
+        BEFORE
+      </text>
+      
+      <!-- Single File Representation -->
+      <g transform="translate(250, 450)">
+        <rect width="580" height="200" fill="rgba(255,255,255,0.1)" rx="8"/>
+        <rect x="20" y="20" width="16" height="12" fill="#4A90E2"/>
+        <text x="22" y="29" fill="white" font-size="8" font-weight="bold">TS</text>
+        <text x="45" y="30" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="16" font-weight="600" fill="white">utils.ts</text>
+        <text x="45" y="55" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+              font-size="12" fill="rgba(255,255,255,0.8)">export function fetchUserData()</text>
+        <text x="45" y="75" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+              font-size="12" fill="rgba(255,255,255,0.8)">export function validateEmail()</text>
+        <text x="45" y="95" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+              font-size="12" fill="rgba(255,255,255,0.8)">export class UserManager</text>
+        <text x="45" y="115" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+              font-size="12" fill="rgba(255,255,255,0.8)">export type TUser</text>
+        <text x="45" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="14" fill="rgba(255,255,255,0.6)">
+          Everything mixed together in one file
+        </text>
+      </g>
+      
+      <!-- Arrow with Click Indicator -->
+      <g transform="translate(900, 540)">
+        <circle r="35" fill="rgba(40,167,69,0.2)" stroke="#28A745" stroke-width="2"/>
+        <!-- Mouse cursor icon -->
+        <path d="M -8 -12 L -8 8 L -2 2 L 4 8 L 8 4 L -2 -2 Z" fill="white"/>
+        <text x="0" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="12" font-weight="600" fill="white" text-anchor="middle">
+          RIGHT-CLICK
+        </text>
+      </g>
+      
+      <!-- After Section -->
+      <rect x="960" y="370" width="720" height="360" fill="rgba(255,255,255,0.05)" 
+            rx="12" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      <text x="1320" y="410" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+            font-size="20" font-weight="600" fill="white" text-anchor="middle">
+        AFTER
+      </text>
+      
+      <!-- Multiple Organized Files -->
+      <g transform="translate(1020, 450)">
+        <rect width="600" height="200" fill="rgba(255,255,255,0.1)" rx="8"/>
+        <text x="20" y="25" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="14" font-weight="600" fill="#4FC3F7">utils/</text>
+        
+        <!-- File list -->
+        <g transform="translate(40, 45)">
+          <rect x="0" y="0" width="12" height="9" fill="#4A90E2"/>
+          <text x="1" y="7" fill="white" font-size="6" font-weight="bold">TS</text>
+          <text x="18" y="8" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+                font-size="11" fill="rgba(255,255,255,0.9)">fetch-user-data.ts</text>
+                
+          <rect x="0" y="15" width="12" height="9" fill="#4A90E2"/>
+          <text x="1" y="22" fill="white" font-size="6" font-weight="bold">TS</text>
+          <text x="18" y="23" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+                font-size="11" fill="rgba(255,255,255,0.9)">validate-email.ts</text>
+                
+          <rect x="0" y="30" width="12" height="9" fill="#4A90E2"/>
+          <text x="1" y="37" fill="white" font-size="6" font-weight="bold">TS</text>
+          <text x="18" y="38" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+                font-size="11" fill="rgba(255,255,255,0.9)">user-manager.ts</text>
+                
+          <rect x="0" y="45" width="12" height="9" fill="#4A90E2"/>
+          <text x="1" y="52" fill="white" font-size="6" font-weight="bold">TS</text>
+          <text x="18" y="53" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+                font-size="11" fill="rgba(255,255,255,0.9)">types.ts</text>
+                
+          <rect x="0" y="60" width="12" height="9" fill="#28A745"/>
+          <text x="1" y="67" fill="white" font-size="6" font-weight="bold">TS</text>
+          <text x="18" y="68" font-family="'SF Mono', Monaco, 'Consolas', monospace" 
+                font-size="11" fill="#4FC3F7">index.ts</text>
+        </g>
+        
+        <text x="40" y="130" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="14" fill="rgba(255,255,255,0.6)">
+          Clean separation with index re-exports
+        </text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Benefits Section -->
+  <g id="benefitsSection">
+    <g transform="translate(150, 800)">
+      <!-- Benefit 1 -->
+      <circle cx="12" cy="12" r="8" fill="#28A745"/>
+      <path d="M 8 12 L 11 15 L 16 8" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      <text x="35" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+            font-size="16" font-weight="500" fill="white">
+        Zero configuration required
+      </text>
+      
+      <!-- Benefit 2 -->
+      <g transform="translate(400, 0)">
+        <circle cx="12" cy="12" r="8" fill="#28A745"/>
+        <path d="M 8 12 L 11 15 L 16 8" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <text x="35" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="16" font-weight="500" fill="white">
+          Works with any TypeScript file
+        </text>
+      </g>
+      
+      <!-- Benefit 3 -->
+      <g transform="translate(800, 0)">
+        <circle cx="12" cy="12" r="8" fill="#28A745"/>
+        <path d="M 8 12 L 11 15 L 16 8" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <text x="35" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+              font-size="16" font-weight="500" fill="white">
+          Complete in seconds
+        </text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- Branding Footer -->
+  <g id="brandingFooter">
+    <rect x="150" y="850" width="300" height="2" fill="rgba(255,255,255,0.3)"/>
+    <text x="150" y="875" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="18" font-weight="600" fill="white">
+      Separation of Concerns Migrator
+    </text>
+    <text x="150" y="895" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="14" font-weight="400" fill="rgba(255,255,255,0.7)">
+      VS Code Extension
+    </text>
+    
+    <!-- Call to Action -->
+    <rect x="1400" y="840" width="180" height="50" rx="25" fill="rgba(255,255,255,0.15)" 
+          stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+    <text x="1490" y="870" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+          font-size="16" font-weight="600" fill="white" text-anchor="middle">
+      Install Now
+    </text>
+  </g>
+</svg>

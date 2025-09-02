@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420">
+  <defs>
+    <linearGradient id="devtoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="420" fill="url(#devtoGradient)"/>
+  <rect x="40" y="40" width="920" height="340" fill="rgba(255,255,255,0.05)" rx="12"/>
+  
+  <text x="500" y="150" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="36" font-weight="700" fill="white" text-anchor="middle">
+    Automate Separation of Concerns
+  </text>
+  <text x="500" y="200" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="20" font-weight="400" fill="rgba(255,255,255,0.9)" text-anchor="middle">
+    Complete tutorial for the new VS Code extension
+  </text>
+  <text x="500" y="280" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" 
+        font-size="16" font-weight="400" fill="rgba(255,255,255,0.7)" text-anchor="middle">
+    Step-by-step guide to organizing TypeScript code
+  </text>
+</svg>

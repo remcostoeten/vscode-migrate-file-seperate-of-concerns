@@ -23,3 +23,4 @@ generate-icons.sh
 !assets/icon.png
 assets/*.svg
 assets/icon-*.png
+store-assets/**
