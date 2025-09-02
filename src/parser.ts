@@ -45,6 +45,13 @@ function traverseAST(node: any, result: TParsed, content: string) {
     case 'Program':
       node.body.forEach((child: any) => {
         collectDeclarations(child, declarations)
+        // Also collect non-exported types and interfaces for dependency resolution
+        if (child.type === 'TSTypeAliasDeclaration') {
+          result.types.push(parseTypeDeclaration(child, content, false))
+        }
+        if (child.type === 'TSInterfaceDeclaration') {
+          result.interfaces.push(parseInterfaceDeclaration(child, content, false))
+        }
       })
       
       node.body.forEach((child: any) => {
@@ -54,6 +61,14 @@ function traverseAST(node: any, result: TParsed, content: string) {
       node.body.forEach((child: any) => {
         if (child.type === 'ImportDeclaration') {
           result.imports.push(parseImportDeclaration(child))
+        }
+        // Also collect standalone variables (not just those in exports)
+        if (child.type === 'VariableDeclaration') {
+          child.declarations.forEach((decl: any) => {
+            if (decl.id && decl.id.name) {
+              result.variables.push(parseVariableDeclaration(decl, content, false, child))
+            }
+          })
         }
       })
       break
