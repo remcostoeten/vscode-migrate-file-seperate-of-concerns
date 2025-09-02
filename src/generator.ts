@@ -4,56 +4,71 @@ import { TParsed, TFunction, TClass, TImport } from './types'
 import { getFileNameFromFunctionName, extractUsedVariables, extractUsedImports, generateImportStatement, isTypeImport } from './utils'
 
 export async function generateFiles(parsedData: TParsed, originalFilePath: string) {
+  console.log(`Starting file generation for: ${originalFilePath}`)
+  
   const dirPath = path.dirname(originalFilePath)
   const baseName = path.basename(originalFilePath, path.extname(originalFilePath))
   const folderPath = path.join(dirPath, baseName)
 
+  console.log(`Creating folder: ${folderPath}`)
   if (!fs.existsSync(folderPath)) {
     fs.mkdirSync(folderPath, { recursive: true })
+    console.log(`Created folder: ${folderPath}`)
   }
 
   const exportStatements: string[] = []
 
+  console.log(`Processing ${parsedData.functions.length} functions...`)
   for (const func of parsedData.functions) {
     const fileName = getFileNameFromFunctionName(func.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateFunctionFile(func, parsedData)
 
+    console.log(`Creating function file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
   }
 
+  console.log(`Processing ${parsedData.classes.length} classes...`)
   for (const cls of parsedData.classes) {
     const fileName = getFileNameFromFunctionName(cls.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateClassFile(cls, parsedData)
 
+    console.log(`Creating class file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
   }
 
+  console.log(`Processing ${parsedData.types.length} types...`)
   for (const type of parsedData.types) {
     const fileName = getFileNameFromFunctionName(type.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateTypeFile(type, parsedData)
 
+    console.log(`Creating type file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
   }
 
+  console.log(`Processing ${parsedData.interfaces.length} interfaces...`)
   for (const iface of parsedData.interfaces) {
     const fileName = getFileNameFromFunctionName(iface.name)
     const filePath = path.join(folderPath, fileName)
     const content = generateInterfaceFile(iface, parsedData)
 
+    console.log(`Creating interface file: ${filePath}`)
     fs.writeFileSync(filePath, content)
     exportStatements.push(`export * from './${fileName.replace('.ts', '')}'`)
   }
 
   if (exportStatements.length > 0) {
     const indexPath = path.join(folderPath, 'index.ts')
+    console.log(`Creating index file: ${indexPath}`)
     fs.writeFileSync(indexPath, exportStatements.join('\n') + '\n')
   }
+
+  console.log(`File generation completed. Created ${exportStatements.length} files in: ${folderPath}`)
 }
 
 function generateFunctionFile(func: TFunction, parsedData: TParsed): string {

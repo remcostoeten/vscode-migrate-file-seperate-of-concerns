@@ -23,10 +23,28 @@ export async function migrateFolderToSeparationOfConcerns(uri: vscode.Uri) {
 }
 
 async function migrateFile(filePath: string) {
-  const content = fs.readFileSync(filePath, 'utf-8')
-  const parsedData = parseFile(content, filePath)
+  try {
+    console.log(`Processing file: ${filePath}`)
+    const content = fs.readFileSync(filePath, 'utf-8')
+    const parsedData = parseFile(content, filePath)
+    
+    console.log(`Parsed data:`, {
+      functions: parsedData.functions.length,
+      types: parsedData.types.length,
+      interfaces: parsedData.interfaces.length,
+      classes: parsedData.classes.length,
+      variables: parsedData.variables.length
+    })
 
-  if (parsedData.functions.length > 0 || parsedData.types.length > 0 || parsedData.interfaces.length > 0 || parsedData.classes.length > 0) {
-    await generateFiles(parsedData, filePath)
+    if (parsedData.functions.length > 0 || parsedData.types.length > 0 || parsedData.interfaces.length > 0 || parsedData.classes.length > 0) {
+      console.log(`Generating files for: ${filePath}`)
+      await generateFiles(parsedData, filePath)
+      console.log(`Files generated successfully for: ${filePath}`)
+    } else {
+      console.log(`No functions/types/interfaces/classes found in: ${filePath}`)
+    }
+  } catch (error) {
+    console.error(`Error processing file ${filePath}:`, error)
+    throw error
   }
 }

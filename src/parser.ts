@@ -19,7 +19,9 @@ export function parseFile(content: string, filePath: string): TParsed {
       filePath
     }
 
-    traverseAST(ast, result, content)
+    // Babel parser returns a File node with a program property containing the actual AST
+    const program = ast.program || ast
+    traverseAST(program, result, content)
     return result
   } catch (error) {
     console.error('Parse error:', error)
