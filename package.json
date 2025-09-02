@@ -1,8 +1,9 @@
 {
   "name": "separation-of-concerns",
   "displayName": "Separation of Concerns Migrator",
-  "description": "Migrate files to separation of concerns pattern",
+  "description": "Automatically splits TypeScript/JavaScript files into separate files following separation of concerns principles",
   "author": "Remco Stoeten",
+  "publisher": "remcostoeten",
   "license": "MIT",
   "version": "1.0.0",
   "icon": "assets/icon.png",
@@ -50,22 +51,7 @@
     }
   },
   "scripts": {
-    "clean": "rimraf dist out",
-    "dev": "node build.mjs --watch",
-    "build": "node build.mjs",
-    "build:prod": "NODE_ENV=production node build.mjs",
-    "watch": "node build.mjs --watch",
-    "package": "npm run build:prod && vsce package",
-    "vscode:prepublish": "npm run build:prod"
-  },
-  "devDependencies": {
-    "@types/node": "16.x",
-    "@types/vscode": "^1.74.0",
-    "@vscode/vsce": "^3.6.0",
-    "esbuild": "^0.25.9",
-    "rimraf": "^6.0.1",
-    "typescript": "^4.9.4",
-    "vinxi": "^0.5.8"
+    "vscode:prepublish": "echo 'Extension is pre-built'"
   },
   "dependencies": {
     "@babel/parser": "^7.26.2",

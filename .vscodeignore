@@ -13,14 +13,10 @@ debug-parser.js
 test-*.js
 *.tgz
 *.vsix
-.github/**
 .git/**
 *.md
 !README.md
-pnpm-lock.yaml
 package-lock.json
-generate-icons.sh
 !assets/icon.png
 assets/*.svg
 assets/icon-*.png
-store-assets/**
