@@ -37,61 +37,158 @@ export function parseFile(content: string, filePath: string): TParsed {
   }
 }
 
-function traverseAST(node: any, result: TParsed, content: string, isExported = false) {
+function traverseAST(node: any, result: TParsed, content: string) {
   if (!node) return
 
+  // First pass: collect all declarations
+  const declarations = new Map<string, any>()
+  
   switch (node.type) {
     case 'Program':
-      node.body.forEach((child: any) => traverseAST(child, result, content))
-      break
-
-    case 'ExportNamedDeclaration':
-      if (node.declaration) {
-        traverseAST(node.declaration, result, content, true)
-      }
-      break
-
-    case 'ExportDefaultDeclaration':
-      traverseAST(node.declaration, result, content, true)
-      break
-
-    case 'ImportDeclaration':
-      result.imports.push(parseImportDeclaration(node))
-      break
-
-    case 'FunctionDeclaration':
-      result.functions.push(parseFunctionDeclaration(node, content, isExported, result.imports))
-      break
-
-    case 'TSTypeAliasDeclaration':
-      result.types.push(parseTypeDeclaration(node, content, isExported))
-      break
-
-    case 'TSInterfaceDeclaration':
-      result.interfaces.push(parseInterfaceDeclaration(node, content, isExported))
-      break
-
-    case 'ClassDeclaration':
-      result.classes.push(parseClassDeclaration(node, content, isExported, result.imports))
-      break
-
-    case 'VariableDeclaration':
-      node.declarations.forEach((decl: any) => {
-        if (decl.id && decl.id.name) {
-          result.variables.push(parseVariableDeclaration(decl, content, isExported, node))
+      // Collect all top-level declarations first
+      node.body.forEach((child: any) => {
+        collectDeclarations(child, declarations)
+      })
+      
+      // Process exports only
+      node.body.forEach((child: any) => {
+        processExports(child, result, content, declarations)
+      })
+      
+      // Process imports
+      node.body.forEach((child: any) => {
+        if (child.type === 'ImportDeclaration') {
+          result.imports.push(parseImportDeclaration(child))
         }
       })
       break
+  }
+}
 
-    default:
-      if (node.body) {
-        if (Array.isArray(node.body)) {
-          node.body.forEach((child: any) => traverseAST(child, result, content, isExported))
-        } else {
-          traverseAST(node.body, result, content, isExported)
-        }
+function collectDeclarations(node: any, declarations: Map<string, any>) {
+  switch (node.type) {
+    case 'FunctionDeclaration':
+      if (node.id && node.id.name) {
+        declarations.set(node.id.name, { type: 'function', node })
       }
       break
+    case 'VariableDeclaration':
+      node.declarations.forEach((decl: any) => {
+        if (decl.id && decl.id.name) {
+          declarations.set(decl.id.name, { type: 'variable', node: decl, parent: node })
+        }
+      })
+      break
+    case 'ClassDeclaration':
+      if (node.id && node.id.name) {
+        declarations.set(node.id.name, { type: 'class', node })
+      }
+      break
+    case 'TSTypeAliasDeclaration':
+      if (node.id && node.id.name) {
+        declarations.set(node.id.name, { type: 'type', node })
+      }
+      break
+    case 'TSInterfaceDeclaration':
+      if (node.id && node.id.name) {
+        declarations.set(node.id.name, { type: 'interface', node })
+      }
+      break
+  }
+}
+
+function processExports(node: any, result: TParsed, content: string, declarations: Map<string, any>) {
+  switch (node.type) {
+    case 'ExportNamedDeclaration':
+      if (node.declaration) {
+        // Direct exports: export function foo() {}, export const bar = ...
+        processExportedDeclaration(node.declaration, result, content, true)
+      } else if (node.specifiers) {
+        // Named exports: export { foo, bar }
+        node.specifiers.forEach((spec: any) => {
+          const exportedName = spec.exported.name
+          const localName = spec.local.name
+          const declaration = declarations.get(localName)
+          
+          if (declaration) {
+            processExportedDeclaration(declaration.node, result, content, true, declaration.parent)
+          }
+        })
+      }
+      break
+      
+    case 'ExportDefaultDeclaration':
+      // export default function() {} or export default foo
+      if (node.declaration) {
+        processExportedDeclaration(node.declaration, result, content, true, null, true)
+      }
+      break
+  }
+}
+
+function processExportedDeclaration(node: any, result: TParsed, content: string, isExported: boolean, parent?: any, isDefault = false) {
+  switch (node.type) {
+    case 'FunctionDeclaration':
+      // Only process functions that are exported
+      result.functions.push(parseFunctionDeclaration(node, content, isExported, result.imports, isDefault))
+      break
+      
+    case 'VariableDeclaration':
+      // Only process exported variables (const/let functions)
+      node.declarations.forEach((decl: any) => {
+        if (decl.id && decl.id.name && isArrowFunctionOrFunction(decl)) {
+          result.functions.push(parseVariableFunction(decl, content, isExported, result.imports, parent || node, isDefault))
+        } else if (decl.id && decl.id.name) {
+          result.variables.push(parseVariableDeclaration(decl, content, isExported, parent || node))
+        }
+      })
+      break
+      
+    case 'ClassDeclaration':
+      result.classes.push(parseClassDeclaration(node, content, isExported, result.imports))
+      break
+      
+    case 'TSTypeAliasDeclaration':
+      result.types.push(parseTypeDeclaration(node, content, isExported))
+      break
+      
+    case 'TSInterfaceDeclaration':
+      result.interfaces.push(parseInterfaceDeclaration(node, content, isExported))
+      break
+      
+    case 'Identifier':
+      // This handles cases like: const foo = () => {}; export default foo;
+      // We need to look up the declaration
+      break
+  }
+}
+
+function isArrowFunctionOrFunction(decl: any): boolean {
+  return decl.init && (decl.init.type === 'ArrowFunctionExpression' || decl.init.type === 'FunctionExpression')
+}
+
+function parseVariableFunction(decl: any, content: string, isExported: boolean, fileImports: TImport[], parent: any, isDefault = false): TFunction {
+  const name = isDefault ? 'default' : decl.id.name
+  const startLine = parent.loc.start.line
+  const endLine = parent.loc.end.line
+  const code = extractCodeFromNode(parent, content)
+  
+  const dependencies = extractDependencies(code)
+  const imports = filterRelevantImports(dependencies, fileImports)
+  const variables = extractLocalVariables(code)
+  
+  return {
+    name,
+    code,
+    dependencies,
+    imports,
+    variables,
+    isExported,
+    isAsync: decl.init?.async || false,
+    parameters: decl.init?.params ? decl.init.params.map((p: any) => p.name || 'param') : [],
+    returnType: decl.init?.returnType ? extractCodeFromNode(decl.init.returnType, content) : undefined,
+    startLine,
+    endLine
   }
 }
 
@@ -157,8 +254,8 @@ function parseImportDeclaration(node: any): TImport {
   }
 }
 
-function parseFunctionDeclaration(node: any, content: string, isExported: boolean, fileImports: TImport[]): TFunction {
-  const name = node.id ? node.id.name : 'anonymous'
+function parseFunctionDeclaration(node: any, content: string, isExported: boolean, fileImports: TImport[], isDefault = false): TFunction {
+  const name = isDefault ? 'default' : (node.id ? node.id.name : 'anonymous')
   const startLine = node.loc.start.line
   const endLine = node.loc.end.line
   const code = extractCodeFromNode(node, content)
